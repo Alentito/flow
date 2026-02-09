@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  VISITOR
+  MEMBER
+  ADMIN
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(VISITOR)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  posts Post[]
+
+  brainstormRooms BrainstormRoom[]
+  brainstormIdeas BrainstormIdea[]
+  brainstormMessages BrainstormMessage[]
+}
+
+model Post {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  excerpt     String?
+  content     String     @default("")
+  contentJson Json?
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+
+  authorId String
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BrainstormRoom {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  ideas    BrainstormIdea[]
+  messages BrainstormMessage[]
+
+  @@index([updatedAt])
+  @@index([createdById])
+}
+
+model BrainstormIdea {
+  id         String   @id @default(cuid())
+  title      String
+  content    String   @default("")
+  contentJson Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  roomId String
+  room   BrainstormRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, updatedAt])
+  @@index([authorId])
+}
+
+model BrainstormMessage {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  roomId String
+  room   BrainstormRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, createdAt])
+  @@index([authorId])
+}

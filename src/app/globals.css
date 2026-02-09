@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -10,13 +17,22 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* App design tokens referenced in classNames */
+  --color-background-light: #ffffff;
+  --color-background-dark: #0a0a0a;
+
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #111827;
+
+  --color-text-main-light: #0a0a0a;
+  --color-text-main-dark: #ededed;
+
+  --color-text-muted-light: #52525b;
+  --color-text-muted-dark: #a1a1aa;
+
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
 }
 
 body {

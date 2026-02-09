@@ -33,6 +33,13 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# prisma local dev artifacts
+prisma/dev.db*
+prisma/migrations_sqlite_*/
+
+# local scratch
+aa.txt
+
 # vercel
 .vercel
 
