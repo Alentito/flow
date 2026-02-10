@@ -130,7 +130,8 @@ export function ProjectShowcase({ project }: Props) {
   const heroSrc = project.heroVideo?.src;
   const youtubeEmbed = heroSrc ? toYouTubeEmbedUrl(heroSrc) : null;
   const headerRef = useRef<HTMLElement | null>(null);
-  const [showStickyNav, setShowStickyNav] = useState(false);
+  const [passedHero, setPassedHero] = useState(false);
+  const [scrollingDown, setScrollingDown] = useState(false);
 
   useEffect(() => {
     const el = headerRef.current;
@@ -139,8 +140,8 @@ export function ProjectShowcase({ project }: Props) {
     const obs = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        // When hero/header is no longer visible, show sticky nav.
-        setShowStickyNav(!entry.isIntersecting);
+        // Consider the hero "passed" once the header is fully out of view.
+        setPassedHero(!entry.isIntersecting);
       },
       {
         root: null,
@@ -151,6 +152,32 @@ export function ProjectShowcase({ project }: Props) {
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let raf = 0;
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        const y = window.scrollY;
+        const delta = y - lastY;
+        if (Math.abs(delta) > 2) {
+          setScrollingDown(delta > 0);
+          lastY = y;
+        }
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  const showStickyNav = passedHero && scrollingDown;
 
   return (
     <main>
@@ -226,18 +253,16 @@ export function ProjectShowcase({ project }: Props) {
               </div>
             </div>
           </div>
-
-          {project.sections?.length ? (
-            <div className="absolute inset-x-0 bottom-0">
-              <div className="mx-auto max-w-6xl px-4 pb-6">
-                <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
-                  <ProjectSectionNav sections={project.sections} offsetPx={112} />
-                </div>
-              </div>
-            </div>
-          ) : null}
         </div>
       </header>
+
+      {project.sections?.length ? (
+        <div className="border-b bg-white/80 dark:bg-black/40 backdrop-blur">
+          <div className="mx-auto max-w-6xl px-4 py-2">
+            <ProjectSectionNav sections={project.sections} offsetPx={112} />
+          </div>
+        </div>
+      ) : null}
 
       <section className="mx-auto max-w-4xl px-4 py-12">
         <div className="space-y-12">
