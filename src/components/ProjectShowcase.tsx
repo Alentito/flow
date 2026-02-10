@@ -9,12 +9,59 @@ type Props = {
   project: Project;
 };
 
+function toYouTubeEmbedUrl(url: string) {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "");
+
+    // youtu.be/<id>
+    if (host === "youtu.be") {
+      const id = u.pathname.split("/").filter(Boolean)[0];
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      // /watch?v=<id>
+      if (u.pathname === "/watch") {
+        const id = u.searchParams.get("v");
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+      // /embed/<id>
+      if (u.pathname.startsWith("/embed/")) {
+        const id = u.pathname.split("/").filter(Boolean)[1];
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+      // /shorts/<id>
+      if (u.pathname.startsWith("/shorts/")) {
+        const id = u.pathname.split("/").filter(Boolean)[1];
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
 export function ProjectShowcase({ project }: Props) {
+  const heroSrc = project.heroVideo?.src;
+  const youtubeEmbed = heroSrc ? toYouTubeEmbedUrl(heroSrc) : null;
+
   return (
     <main>
       <header className="relative overflow-hidden border-b">
         <div className="relative h-[520px] sm:h-[620px]">
-          {project.heroVideo?.src ? (
+          {youtubeEmbed ? (
+            <iframe
+              className="absolute inset-0 h-full w-full"
+              src={`${youtubeEmbed}?autoplay=1&mute=1&loop=1&playlist=${new URL(youtubeEmbed).pathname.split("/").pop()}&controls=0&modestbranding=1&playsinline=1`}
+              title={`${project.title} hero video`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          ) : heroSrc ? (
             <video
               className="absolute inset-0 h-full w-full object-cover"
               autoPlay
@@ -22,9 +69,9 @@ export function ProjectShowcase({ project }: Props) {
               loop
               playsInline
               preload="metadata"
-              poster={project.heroVideo.poster}
+              poster={project.heroVideo?.poster}
             >
-              <source src={project.heroVideo.src} />
+              <source src={heroSrc} />
             </video>
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-purple-500/10 to-transparent" />
