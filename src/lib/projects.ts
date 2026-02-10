@@ -3,11 +3,21 @@ export type ProjectHeroVideo = {
   poster?: string;
 };
 
+export type ProjectMediaKind = "image" | "gif" | "video" | "youtube";
+
+export type ProjectMedia = {
+  kind: ProjectMediaKind;
+  src: string;
+  caption?: string;
+  poster?: string;
+};
+
 export type ProjectSection = {
   id: string;
   label: string;
   title: string;
   body: string;
+  media?: ProjectMedia[];
 };
 
 export type Project = {

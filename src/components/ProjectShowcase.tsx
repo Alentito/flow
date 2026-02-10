@@ -44,6 +44,87 @@ function toYouTubeEmbedUrl(url: string) {
   return null;
 }
 
+function renderMediaItem(projectTitle: string, m: any, index: number) {
+  const kind = m?.kind as string | undefined;
+  const src = m?.src as string | undefined;
+  const caption = typeof m?.caption === "string" ? m.caption : "";
+  const poster = typeof m?.poster === "string" ? m.poster : undefined;
+
+  if (!kind || !src) return null;
+
+  if (kind === "youtube") {
+    const embed = toYouTubeEmbedUrl(src);
+    if (!embed) {
+      return (
+        <a
+          key={`yt-${index}`}
+          href={src}
+          target="_blank"
+          rel="noreferrer"
+          className="block rounded-lg border p-4 text-sm text-primary hover:underline"
+        >
+          Open YouTube
+        </a>
+      );
+    }
+    const id = new URL(embed).pathname.split("/").pop();
+    return (
+      <div key={`yt-${index}`} className="rounded-lg border overflow-hidden">
+        <div className="relative w-full aspect-video">
+          <iframe
+            className="absolute inset-0 h-full w-full"
+            src={`${embed}?autoplay=0&mute=0&loop=0&controls=1&modestbranding=1&playsinline=1${id ? `&playlist=${id}` : ""}`}
+            title={`${projectTitle} section video`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+        {caption ? (
+          <div className="px-4 py-3 text-xs text-text-muted-light dark:text-text-muted-dark">
+            {caption}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (kind === "video") {
+    return (
+      <div key={`vid-${index}`} className="rounded-lg border overflow-hidden">
+        <video className="w-full" controls playsInline preload="metadata" poster={poster}>
+          <source src={src} />
+        </video>
+        {caption ? (
+          <div className="px-4 py-3 text-xs text-text-muted-light dark:text-text-muted-dark">
+            {caption}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (kind === "image" || kind === "gif") {
+    return (
+      <figure key={`${kind}-${index}`} className="rounded-lg border overflow-hidden">
+        <img
+          src={src}
+          alt={caption || `${projectTitle} media`}
+          className="w-full h-auto"
+          loading="lazy"
+        />
+        {caption ? (
+          <figcaption className="px-4 py-3 text-xs text-text-muted-light dark:text-text-muted-dark">
+            {caption}
+          </figcaption>
+        ) : null}
+      </figure>
+    );
+  }
+
+  return null;
+}
+
 export function ProjectShowcase({ project }: Props) {
   const heroSrc = project.heroVideo?.src;
   const youtubeEmbed = heroSrc ? toYouTubeEmbedUrl(heroSrc) : null;
@@ -124,6 +205,12 @@ export function ProjectShowcase({ project }: Props) {
               <p className="mt-3 text-text-muted-light dark:text-text-muted-dark leading-7 whitespace-pre-wrap">
                 {s.body}
               </p>
+
+              {(s.media ?? []).length ? (
+                <div className="mt-6 grid gap-4">
+                  {(s.media ?? []).map((m, i) => renderMediaItem(project.title, m, i))}
+                </div>
+              ) : null}
             </article>
           ))}
         </div>

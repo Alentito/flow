@@ -6,6 +6,13 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { requireMember } from "@/lib/rbac";
 
+const MediaSchema = z.object({
+  kind: z.enum(["image", "gif", "video", "youtube"]),
+  src: z.string().trim().min(1).max(1000),
+  caption: z.string().trim().max(200).optional(),
+  poster: z.string().trim().max(1000).optional(),
+});
+
 const SectionSchema = z.object({
   id: z
     .string()
@@ -16,6 +23,7 @@ const SectionSchema = z.object({
   label: z.string().trim().min(1).max(40),
   title: z.string().trim().min(1).max(120),
   body: z.string().trim().min(1).max(5000),
+  media: z.array(MediaSchema).max(24).optional(),
 });
 
 const CreateProjectSchema = z.object({

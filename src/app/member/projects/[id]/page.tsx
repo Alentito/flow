@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { ProjectShowcase } from "@/components/ProjectShowcase";
-import type { ProjectSection, Project } from "@/lib/projects";
+import type { ProjectMedia, ProjectMediaKind, ProjectSection, Project } from "@/lib/projects";
 
 type ProjectRecord = {
   id: string;
@@ -38,6 +38,51 @@ function slugify(input: string) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function addMediaToSections(
+  sections: ProjectSection[],
+  sectionIndex: number,
+  kind: ProjectMediaKind,
+) {
+  const copy = [...sections];
+  const s = copy[sectionIndex];
+  if (!s) return sections;
+  const media = [...(s.media ?? [])];
+  media.push({ kind, src: "", caption: "" });
+  copy[sectionIndex] = { ...s, media };
+  return copy;
+}
+
+function updateMediaInSections(
+  sections: ProjectSection[],
+  sectionIndex: number,
+  mediaIndex: number,
+  patch: Partial<ProjectMedia>,
+) {
+  const copy = [...sections];
+  const s = copy[sectionIndex];
+  if (!s) return sections;
+  const media = [...(s.media ?? [])];
+  const item = media[mediaIndex];
+  if (!item) return sections;
+  media[mediaIndex] = { ...item, ...patch };
+  copy[sectionIndex] = { ...s, media };
+  return copy;
+}
+
+function removeMediaFromSections(
+  sections: ProjectSection[],
+  sectionIndex: number,
+  mediaIndex: number,
+) {
+  const copy = [...sections];
+  const s = copy[sectionIndex];
+  if (!s) return sections;
+  const media = [...(s.media ?? [])];
+  media.splice(mediaIndex, 1);
+  copy[sectionIndex] = { ...s, media: media.length ? media : undefined };
+  return copy;
 }
 
 export default function EditProjectPage() {
@@ -428,6 +473,164 @@ export default function EditProjectPage() {
                           })
                         }
                       />
+                    </div>
+
+                    <div className="mt-4 rounded-lg border p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-medium">Media</div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            className="px-2 py-1 rounded border text-sm"
+                            onClick={() =>
+                              setProject((p) =>
+                                p ? { ...p, sections: addMediaToSections(p.sections, idx, "image") } : p,
+                              )
+                            }
+                          >
+                            + Image
+                          </button>
+                          <button
+                            type="button"
+                            className="px-2 py-1 rounded border text-sm"
+                            onClick={() =>
+                              setProject((p) =>
+                                p ? { ...p, sections: addMediaToSections(p.sections, idx, "gif") } : p,
+                              )
+                            }
+                          >
+                            + GIF
+                          </button>
+                          <button
+                            type="button"
+                            className="px-2 py-1 rounded border text-sm"
+                            onClick={() =>
+                              setProject((p) =>
+                                p ? { ...p, sections: addMediaToSections(p.sections, idx, "video") } : p,
+                              )
+                            }
+                          >
+                            + Video
+                          </button>
+                          <button
+                            type="button"
+                            className="px-2 py-1 rounded border text-sm"
+                            onClick={() =>
+                              setProject((p) =>
+                                p ? { ...p, sections: addMediaToSections(p.sections, idx, "youtube") } : p,
+                              )
+                            }
+                          >
+                            + YouTube
+                          </button>
+                        </div>
+                      </div>
+
+                      {(s.media ?? []).length === 0 ? (
+                        <div className="mt-2 text-xs text-text-muted-light dark:text-text-muted-dark">
+                          No media yet.
+                        </div>
+                      ) : (
+                        <div className="mt-3 space-y-3">
+                          {(s.media ?? []).map((m, mi) => (
+                            <div key={`${m.kind}-${mi}`} className="rounded-md border p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                                  {m.kind.toUpperCase()}
+                                </div>
+                                <button
+                                  type="button"
+                                  className="px-2 py-1 rounded border text-sm"
+                                  onClick={() =>
+                                    setProject((p) =>
+                                      p
+                                        ? {
+                                            ...p,
+                                            sections: removeMediaFromSections(p.sections, idx, mi),
+                                          }
+                                        : p,
+                                    )
+                                  }
+                                >
+                                  Remove
+                                </button>
+                              </div>
+
+                              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                                <div>
+                                  <label className="block text-xs font-medium mb-1">
+                                    {m.kind === "youtube" ? "YouTube URL" : "Media URL"}
+                                  </label>
+                                  <input
+                                    className="w-full px-3 py-2 border rounded-md bg-surface-light dark:bg-surface-dark"
+                                    value={m.src}
+                                    onChange={(e) =>
+                                      setProject((p) =>
+                                        p
+                                          ? {
+                                              ...p,
+                                              sections: updateMediaInSections(p.sections, idx, mi, {
+                                                src: e.target.value,
+                                              }),
+                                            }
+                                          : p,
+                                      )
+                                    }
+                                    placeholder={
+                                      m.kind === "youtube"
+                                        ? "https://www.youtube.com/watch?v=..."
+                                        : "https://... or /images/..."
+                                    }
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium mb-1">Caption (optional)</label>
+                                  <input
+                                    className="w-full px-3 py-2 border rounded-md bg-surface-light dark:bg-surface-dark"
+                                    value={m.caption ?? ""}
+                                    onChange={(e) =>
+                                      setProject((p) =>
+                                        p
+                                          ? {
+                                              ...p,
+                                              sections: updateMediaInSections(p.sections, idx, mi, {
+                                                caption: e.target.value,
+                                              }),
+                                            }
+                                          : p,
+                                      )
+                                    }
+                                    placeholder="Short caption"
+                                  />
+                                </div>
+                              </div>
+
+                              {m.kind === "video" ? (
+                                <div className="mt-2">
+                                  <label className="block text-xs font-medium mb-1">Poster URL (optional)</label>
+                                  <input
+                                    className="w-full px-3 py-2 border rounded-md bg-surface-light dark:bg-surface-dark"
+                                    value={m.poster ?? ""}
+                                    onChange={(e) =>
+                                      setProject((p) =>
+                                        p
+                                          ? {
+                                              ...p,
+                                              sections: updateMediaInSections(p.sections, idx, mi, {
+                                                poster: e.target.value,
+                                              }),
+                                            }
+                                          : p,
+                                      )
+                                    }
+                                    placeholder="/images/poster.jpg or https://..."
+                                  />
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
