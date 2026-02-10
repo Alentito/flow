@@ -19,6 +19,9 @@ export default async function MemberPage() {
         <Link href="/member/posts" className="text-primary hover:underline">
           Manage your blog posts
         </Link>
+        <Link href="/member/projects" className="text-primary hover:underline">
+          Manage your projects
+        </Link>
       </div>
     </main>
   );

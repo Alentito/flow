@@ -19,55 +19,31 @@ export type Project = {
   sections: ProjectSection[];
 };
 
-export const projects: Project[] = [
-  {
-    slug: "flow",
-    title: "Flow",
-    description:
-      "A research hub for publishing updates, collaborating, and showcasing models.",
-    githubUrl: "https://github.com/",
-    heroVideo: {
-      // Put your MP4 in public/videos and reference it like this.
-      // Example: public/videos/flow-hero.mp4
-      src: "/videos/flow-hero.mp4",
+export function defaultProjectSections(): ProjectSection[] {
+  return [
+    {
+      id: "overview",
+      label: "Overview",
+      title: "Overview",
+      body: "Describe what this project is and why it matters.",
     },
-    sections: [
-      {
-        id: "overview",
-        label: "Overview",
-        title: "Overview",
-        body:
-          "Flow is a lightweight research website with member editing and public publishing.",
-      },
-      {
-        id: "performance",
-        label: "Performance",
-        title: "Performance",
-        body:
-          "Add benchmarks, latency numbers, or evaluation notes here.",
-      },
-      {
-        id: "applications",
-        label: "Applications",
-        title: "Applications",
-        body:
-          "Describe what this project enables and where it’s used.",
-      },
-      {
-        id: "approach",
-        label: "Approach",
-        title: "Approach",
-        body:
-          "Explain architecture, training recipe, data pipeline, or methodology.",
-      },
-    ],
-  },
-];
-
-export function getAllProjects() {
-  return projects;
-}
-
-export function getProjectBySlug(slug: string) {
-  return projects.find((p) => p.slug === slug) ?? null;
+    {
+      id: "performance",
+      label: "Performance",
+      title: "Performance",
+      body: "Add metrics, benchmarks, and evaluation notes.",
+    },
+    {
+      id: "applications",
+      label: "Applications",
+      title: "Applications",
+      body: "Explain real-world uses and deployment contexts.",
+    },
+    {
+      id: "approach",
+      label: "Approach",
+      title: "Approach",
+      body: "Summarize the method/architecture/training recipe.",
+    },
+  ];
 }

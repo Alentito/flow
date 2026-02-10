@@ -1,11 +1,19 @@
 import Link from "next/link";
 
-import { getAllProjects } from "@/lib/projects";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export default function ProjectsPage() {
-  const projects = getAllProjects();
+export default async function ProjectsPage() {
+  const projects = await prisma.project.findMany({
+    where: { status: "PUBLISHED" },
+    orderBy: { publishedAt: "desc" },
+    select: {
+      slug: true,
+      title: true,
+      description: true,
+    },
+  });
 
   return (
     <main className="max-w-5xl mx-auto py-12 px-4">

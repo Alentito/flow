@@ -18,6 +18,11 @@ enum PostStatus {
   PUBLISHED
 }
 
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String?
@@ -29,9 +34,34 @@ model User {
 
   posts Post[]
 
+  projects Project[]
+
   brainstormRooms BrainstormRoom[]
   brainstormIdeas BrainstormIdea[]
   brainstormMessages BrainstormMessage[]
+}
+
+model Project {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  title           String
+  description     String        @default("")
+  githubUrl       String?
+  heroVideoSrc    String?
+  heroVideoPoster String?
+  sections        Json
+
+  status      ProjectStatus @default(DRAFT)
+  publishedAt DateTime?
+
+  authorId String
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([authorId, updatedAt])
 }
 
 model Post {
