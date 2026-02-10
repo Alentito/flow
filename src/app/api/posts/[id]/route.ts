@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 
@@ -76,7 +77,7 @@ export async function PATCH(
 
   const existing = await prisma.post.findUnique({
     where: { id },
-    select: { authorId: true },
+    select: { authorId: true, slug: true, status: true },
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -125,6 +126,14 @@ export async function PATCH(
       where: { id },
       data: next,
     });
+
+    // Ensure public pages reflect updates immediately in production.
+    // This is safe even if pages are forced-dynamic.
+    revalidatePath("/");
+    revalidatePath("/blog");
+    if (existing.slug) revalidatePath(`/blog/${existing.slug}`);
+    if (post.slug && post.slug !== existing.slug) revalidatePath(`/blog/${post.slug}`);
+
     return NextResponse.json({ ok: true, post });
   } catch (err) {
     console.error("PATCH /api/posts/[id] update failed", err);
