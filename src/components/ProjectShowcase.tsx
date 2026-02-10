@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import type { Project } from "@/lib/projects";
@@ -129,76 +128,10 @@ function renderMediaItem(projectTitle: string, m: any, index: number) {
 export function ProjectShowcase({ project }: Props) {
   const heroSrc = project.heroVideo?.src;
   const youtubeEmbed = heroSrc ? toYouTubeEmbedUrl(heroSrc) : null;
-  const headerRef = useRef<HTMLElement | null>(null);
-  const [passedHero, setPassedHero] = useState(false);
-  const [scrollingDown, setScrollingDown] = useState(false);
-
-  useEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        // Consider the hero "passed" once the header is fully out of view.
-        setPassedHero(!entry.isIntersecting);
-      },
-      {
-        root: null,
-        threshold: 0,
-      },
-    );
-
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  useEffect(() => {
-    let lastY = window.scrollY;
-    let raf = 0;
-
-    const onScroll = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(() => {
-        raf = 0;
-        const y = window.scrollY;
-        const delta = y - lastY;
-        if (Math.abs(delta) > 2) {
-          setScrollingDown(delta > 0);
-          lastY = y;
-        }
-      });
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (raf) window.cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  const showStickyNav = passedHero && scrollingDown;
 
   return (
     <main>
-      {project.sections?.length ? (
-        <div
-          className={
-            "fixed top-16 left-0 right-0 z-40 transition-all duration-300 ease-out " +
-            (showStickyNav
-              ? "translate-y-0 opacity-100"
-              : "-translate-y-2 opacity-0 pointer-events-none")
-          }
-        >
-          <div className="border-b bg-white/70 dark:bg-black/40 backdrop-blur">
-            <div className="mx-auto max-w-6xl px-4 py-2">
-              <ProjectSectionNav sections={project.sections} offsetPx={112} />
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      <header ref={headerRef} className="relative overflow-hidden border-b">
+      <header className="relative overflow-hidden border-b">
         <div className="relative h-[520px] sm:h-[620px]">
           {youtubeEmbed ? (
             <iframe
@@ -227,7 +160,7 @@ export function ProjectShowcase({ project }: Props) {
 
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-black/10" />
 
-          <div className="relative mx-auto h-full max-w-6xl px-4 py-12">
+          <div className="relative mx-auto flex h-full max-w-6xl items-center px-4 py-12">
             <div className="max-w-xl">
               <div className="text-sm text-white/70">
                 <Link href="/projects" className="hover:underline">
@@ -257,7 +190,7 @@ export function ProjectShowcase({ project }: Props) {
       </header>
 
       {project.sections?.length ? (
-        <div className="border-b bg-white/80 dark:bg-black/40 backdrop-blur">
+        <div className="sticky top-16 z-40 border-b bg-white/80 dark:bg-black/40 backdrop-blur">
           <div className="mx-auto max-w-6xl px-4 py-2">
             <ProjectSectionNav sections={project.sections} offsetPx={112} />
           </div>
