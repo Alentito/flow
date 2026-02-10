@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import type { Project } from "@/lib/projects";
@@ -128,10 +129,49 @@ function renderMediaItem(projectTitle: string, m: any, index: number) {
 export function ProjectShowcase({ project }: Props) {
   const heroSrc = project.heroVideo?.src;
   const youtubeEmbed = heroSrc ? toYouTubeEmbedUrl(heroSrc) : null;
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [showStickyNav, setShowStickyNav] = useState(false);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        // When hero/header is no longer visible, show sticky nav.
+        setShowStickyNav(!entry.isIntersecting);
+      },
+      {
+        root: null,
+        threshold: 0,
+      },
+    );
+
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   return (
     <main>
-      <header className="relative overflow-hidden border-b">
+      {project.sections?.length ? (
+        <div
+          className={
+            "fixed top-16 left-0 right-0 z-40 transition-all duration-300 ease-out " +
+            (showStickyNav
+              ? "translate-y-0 opacity-100"
+              : "-translate-y-2 opacity-0 pointer-events-none")
+          }
+        >
+          <div className="border-b bg-white/70 dark:bg-black/40 backdrop-blur">
+            <div className="mx-auto max-w-6xl px-4 py-2">
+              <ProjectSectionNav sections={project.sections} offsetPx={112} />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <header ref={headerRef} className="relative overflow-hidden border-b">
         <div className="relative h-[520px] sm:h-[620px]">
           {youtubeEmbed ? (
             <iframe
@@ -160,7 +200,7 @@ export function ProjectShowcase({ project }: Props) {
 
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-black/10" />
 
-          <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-between px-4 py-12">
+          <div className="relative mx-auto h-full max-w-6xl px-4 py-12">
             <div className="max-w-xl">
               <div className="text-sm text-white/70">
                 <Link href="/projects" className="hover:underline">
@@ -185,11 +225,17 @@ export function ProjectShowcase({ project }: Props) {
                 ) : null}
               </div>
             </div>
-
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
-              <ProjectSectionNav sections={project.sections} offsetPx={96} />
-            </div>
           </div>
+
+          {project.sections?.length ? (
+            <div className="absolute inset-x-0 bottom-0">
+              <div className="mx-auto max-w-6xl px-4 pb-6">
+                <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
+                  <ProjectSectionNav sections={project.sections} offsetPx={112} />
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </header>
 

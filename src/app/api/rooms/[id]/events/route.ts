@@ -9,7 +9,7 @@ function encodeSse(event: BrainstormEvent) {
 }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
   const { id: roomId } = await ctx.params;
@@ -26,35 +26,42 @@ export async function GET(
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       const encoder = new TextEncoder();
+      let closed = false;
 
-      controller.enqueue(
-        encoder.encode(
-          encodeSse({ type: "hello", now: new Date().toISOString() }),
-        ),
+      const safeEnqueue = (chunk: Uint8Array) => {
+        if (closed) return;
+        try {
+          controller.enqueue(chunk);
+        } catch {
+          // Client disconnected / stream closed.
+          closed = true;
+        }
+      };
+
+      safeEnqueue(
+        encoder.encode(encodeSse({ type: "hello", now: new Date().toISOString() })),
       );
 
       const unsubscribe = brainstormBus.connect(roomId, (event) => {
-        controller.enqueue(encoder.encode(encodeSse(event)));
+        safeEnqueue(encoder.encode(encodeSse(event)));
       });
 
       const heartbeat = setInterval(() => {
-        controller.enqueue(
-          encoder.encode(
-            `event: ping\ndata: ${JSON.stringify({ t: Date.now() })}\n\n`,
-          ),
+        safeEnqueue(
+          encoder.encode(`event: ping\ndata: ${JSON.stringify({ t: Date.now() })}\n\n`),
         );
       }, 25_000);
 
-      // @ts-expect-error Next runtime supports cancel on ReadableStream
-      controller.signal?.addEventListener?.("abort", () => {
-        clearInterval(heartbeat);
-        unsubscribe();
-      });
-
-      return () => {
+      const cleanup = () => {
+        if (closed) return;
+        closed = true;
         clearInterval(heartbeat);
         unsubscribe();
       };
+
+      req.signal.addEventListener("abort", cleanup);
+
+      return cleanup;
     },
     cancel() {
       // handled in start cleanup
