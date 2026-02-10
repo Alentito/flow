@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { PostRenderer } from "@/components/PostRenderer";
 import { PostBlocksSchema } from "@/lib/postBlocks";
 
+export const dynamic = "force-dynamic";
+
 export default async function BlogPostPage({
   params,
 }: {
